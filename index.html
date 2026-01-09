@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Sistema Solo</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="style.css">
+
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0f172a">
+</head>
+<body>
+
+  <h1>🗡️ SISTEMA ATIVO</h1>
+
+<div class="player">
+  <p>👤 Caçador: <span id="nomePlayer">---</span></p>
+  <input type="text" id="inputNome" placeholder="Digite seu nome">
+  <button id="btnSalvarNome">Salvar nome</button>
+</div>
+<h2>📊 Status</h2>
+
+<div class="status-box">
+  <p>Força: <span id="forca">1</span> <button onclick="uparForca()">+</button></p>
+  <p>Velocidade: <span id="velocidade">1</span> <button onclick="uparVelocidade()">+</button></p> 
+  <p>Resistência: <span id="resistencia">1</span> <button onclick="uparResistencia()">+</button></p> 
+  <p>Inteligência: <span id="inteligencia">1</span> <button onclick="uparInteligencia()">+</button></p> 
+  <p>Sabedoria: <span id="sabedoria">1</span> <button onclick="uparSabedoria()">+</button></p> 
+  <p>Qi: <span id="qi">1</span> <button onclick="uparQi()">+</button></p> 
+  <p>⭐ Pontos disponíveis: <span id="pontos">0</span></p>
+</div>
+
+  <div class="status">
+    <p>XP: <span id="xp">0</span></p>
+    <p>Nível: <span id="nivel">0</span></p>
+  </div>
+
+  <button onclick="concluir()">✔ Concluir tarefa</button>
+
+  <p>Rank: <span id="rank">E</span></p>
+
+<p>🔥 Streak: <span id="streak">0</span> dias</p>
+
+<h2>📜 Missão Diária</h2>
+<p id="missao">Concluir suas tarefas do dia</p>
+
+<button onclick="missaoDiaria()">🔥 Concluir missão diária</button>
+
+<p id="statusMissao"></p>
+<hr>
+
+<h2>📝 Tarefas</h2>
+
+<input type="text" id="novaTarefa" placeholder="Digite a tarefa">
+<button onclick="adicionarTarefa()">➕ Adicionar</button>
+
+<ul id="listaTarefas"></ul>
+
+<script src="script.js"></script>
+
+</body>
+</html>
