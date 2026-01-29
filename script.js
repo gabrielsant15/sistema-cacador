@@ -26,6 +26,8 @@ const inteligenciaSpan = document.getElementById("inteligencia");
 const sabedoriaSpan = document.getElementById("sabedoria");
 const qiSpan = document.getElementById("qi");
 const pontosSpan = document.getElementById("pontos");
+const xpFill = document.getElementById("xpFill");
+const xpMaxSpan = document.getElementById("xpMax");
 
 // ===== ATUALIZAR A TELA =====
 function atualizarTela() {
@@ -43,9 +45,16 @@ sabedoriaSpan.textContent = sabedoria;
 qiSpan.textContent = qi;
 pontosSpan.textContent = pontos;
 
+const xpMax = nivel * 100;
+const porcentagem = (xp / xpMax) * 100;
+
+xpFill.style.width = porcentagem + "%";
+xpMaxSpan.textContent = xpMax;
+
 }
 
 atualizarTela();
+
 function concluir() {
   xp += 10;
 
@@ -54,11 +63,20 @@ function concluir() {
     nivel++;
     pontos += 5;
     atualizarRank();
+    animarLevelUp();
+    tocarLevelUp();
   }
 
   salvar();
   atualizarTela();
+
+  const box = document.getElementById("statusXP");
+  if (box) {
+    box.classList.add("pulse");
+    setTimeout(() => box.classList.remove("pulse"), 400);
+  }
 }
+
 function atualizarRank() {
   if (nivel >= 20) rank = "S";
   else if (nivel >= 15) rank = "A";
@@ -90,20 +108,45 @@ function missaoDiaria() {
   salvar();
   atualizarTela();
 }
+function atualizarNome() {
+  const span = document.getElementById("nomePlayer");
+  const input = document.getElementById("inputNome");
+  const btnSalvar = document.getElementById("btnSalvarNome");
+  const btnEditar = document.getElementById("btnEditarNome");
+
+  span.textContent = nomePlayer || "---";
+
+  if (nomePlayer) {
+    input.style.display = "none";
+    btnSalvar.style.display = "none";
+    btnEditar.style.display = "inline-block";
+  } else {
+    input.style.display = "block";
+    btnSalvar.style.display = "inline-block";
+    btnEditar.style.display = "none";
+  }
+}
+
 function salvarNome() {
-  nomePlayer = document.getElementById("inputNome").value;
+  const input = document.getElementById("inputNome");
+  const valor = input.value.trim();
 
-  if (nomePlayer.trim() === "") return;
+  if (!valor) return;
 
+  nomePlayer = valor;
   localStorage.setItem("nomePlayer", nomePlayer);
   atualizarNome();
 }
 
-function atualizarNome() {
-  document.getElementById("nomePlayer").textContent =
-    nomePlayer || "---";
+function editarNome() {
+  const input = document.getElementById("inputNome");
+  input.value = nomePlayer;
+
+  nomePlayer = "";
+  localStorage.removeItem("nomePlayer");
+  atualizarNome();
 }
-document.getElementById("btnSalvarNome").addEventListener("click", salvarNome);
+
 
 function uparForca() {
   if (pontos <= 0) return;
@@ -163,3 +206,108 @@ function salvarTudo() {
 
   atualizarTela();
 }
+function abrirPainel() {
+  atualizarPerfil();
+  document.getElementById("painel").classList.add("ativo");
+  document.body.classList.add("painel-aberto");
+}
+
+function fecharPainel() {
+  document.getElementById("painel").classList.remove("ativo");
+  document.body.classList.remove("painel-aberto");
+}
+
+// ===== SISTEMA DE TAREFAS =====
+let tarefas = JSON.parse(localStorage.getItem("tarefas")) || [];
+
+function adicionarTarefa() {
+  const input = document.getElementById("novaTarefa");
+  const texto = input.value.trim();
+
+  if (texto === "") return;
+
+  tarefas.push({
+    texto: texto,
+    feita: false
+  });
+
+  input.value = "";
+  salvarTarefas();
+  renderizarTarefas();
+}
+
+function renderizarTarefas() {
+  const lista = document.getElementById("listaTarefas");
+  lista.innerHTML = "";
+
+  tarefas.forEach((tarefa, index) => {
+    const li = document.createElement("li");
+
+    li.innerHTML = `
+      <span style="text-decoration:${tarefa.feita ? "line-through" : "none"}">
+        ${tarefa.texto}
+      </span>
+      <button onclick="concluirTarefa(${index})">✔</button>
+    `;
+
+    lista.appendChild(li);
+  });
+}
+
+function concluirTarefa(index) {
+  if (tarefas[index].feita) return;
+
+  tarefas[index].feita = true;
+  xp += 10;
+
+  salvar();
+  salvarTarefas();
+  atualizarTela();
+  renderizarTarefas();
+}
+
+function salvarTarefas() {
+  localStorage.setItem("tarefas", JSON.stringify(tarefas));
+}
+
+renderizarTarefas();
+
+function animarLevelUp() {
+  const el = document.getElementById("levelUp");
+  el.classList.add("ativo");
+
+  setTimeout(() => {
+    el.classList.remove("ativo");
+  }, 700);
+}
+document.getElementById("btnSalvarNome").addEventListener("click", salvarNome);
+document.getElementById("btnEditarNome").addEventListener("click", editarNome);
+
+atualizarNome();
+
+function tocarLevelUp() {
+  const som = document.getElementById("somLevelUp");
+  if (som) {
+    som.currentTime = 0;
+    som.play();
+  }
+
+  if (navigator.vibrate) {
+    navigator.vibrate([100, 50, 100]);
+  }
+}
+function atualizarPerfil() {
+  document.getElementById("perfilNome").textContent = nomePlayer || "---";
+  document.getElementById("perfilRank").textContent = rank;
+  document.getElementById("perfilNivel").textContent = nivel;
+  document.getElementById("perfilPontos").textContent = pontos;
+
+  document.getElementById("perfilForca").textContent = forca;
+  document.getElementById("perfilVelocidade").textContent = velocidade;
+  document.getElementById("perfilResistencia").textContent = resistencia;
+  document.getElementById("perfilInteligencia").textContent = inteligencia;
+  document.getElementById("perfilSabedoria").textContent = sabedoria;
+  document.getElementById("perfilQi").textContent = qi;
+}
+
+
