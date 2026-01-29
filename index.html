@@ -11,52 +11,102 @@
 </head>
 <body>
 
-  <h1>🗡️ SISTEMA ATIVO</h1>
+  <div class="app">
 
-<div class="player">
-  <p>👤 Caçador: <span id="nomePlayer">---</span></p>
-  <input type="text" id="inputNome" placeholder="Digite seu nome">
-  <button id="btnSalvarNome">Salvar nome</button>
-</div>
-<h2>📊 Status</h2>
+    <!-- TOPO -->
+    <div class="top-bar">
+     <button class="menu-btn" onclick="abrirPainel()">☰</button>
+     <span class="titulo">SISTEMA</span>
+    </div>
 
-<div class="status-box">
-  <p>Força: <span id="forca">1</span> <button onclick="uparForca()">+</button></p>
-  <p>Velocidade: <span id="velocidade">1</span> <button onclick="uparVelocidade()">+</button></p> 
-  <p>Resistência: <span id="resistencia">1</span> <button onclick="uparResistencia()">+</button></p> 
-  <p>Inteligência: <span id="inteligencia">1</span> <button onclick="uparInteligencia()">+</button></p> 
-  <p>Sabedoria: <span id="sabedoria">1</span> <button onclick="uparSabedoria()">+</button></p> 
-  <p>Qi: <span id="qi">1</span> <button onclick="uparQi()">+</button></p> 
-  <p>⭐ Pontos disponíveis: <span id="pontos">0</span></p>
-</div>
+    <h1>🗡️ SISTEMA ATIVO</h1>
 
-  <div class="status">
-    <p>XP: <span id="xp">0</span></p>
-    <p>Nível: <span id="nivel">0</span></p>
+    <div id="levelUp" class="level-up">LEVEL UP!</div>
+
+    <audio id="somLevelUp" src="levelup.mp3" preload="auto"></audio>
+
+    <div class="player">
+    <p>👤 Caçador: <span id="nomePlayer">---</span></p>
+
+      <input type="text" id="inputNome" placeholder="Digite seu nome">
+
+      <button id="btnSalvarNome">Salvar nome</button>
+      <button id="btnEditarNome" style="display:none;">✏️ Editar nome</button>
+    </div>
+
+    <h2>📊 Status</h2>
+
+    <div class="status-box">
+      <p>Força: <span id="forca">1</span> <button onclick="uparForca()">+</button></p>
+      <p>Velocidade: <span id="velocidade">1</span> <button onclick="uparVelocidade()">+</button></p> 
+      <p>Resistência: <span id="resistencia">1</span> <button onclick="uparResistencia()">+</button></p> 
+      <p>Inteligência: <span id="inteligencia">1</span> <button onclick="uparInteligencia()">+</button></p> 
+      <p>Sabedoria: <span id="sabedoria">1</span> <button onclick="uparSabedoria()">+</button></p> 
+      <p>Qi: <span id="qi">1</span> <button onclick="uparQi()">+</button></p> 
+      <p>⭐ Pontos disponíveis: <span id="pontos">0</span></p>
+    </div>
+
+    <div class="status" id="statusXP">
+  <p>Nível: <span id="nivel">0</span></p>
+
+  <div class="xp-bar">
+    <div class="xp-fill" id="xpFill"></div>
   </div>
 
-  <button onclick="concluir()">✔ Concluir tarefa</button>
+  <p class="xp-text">
+    XP: <span id="xp">0</span> / <span id="xpMax">100</span>
+  </p>
+</div>
 
-  <p>Rank: <span id="rank">E</span></p>
 
-<p>🔥 Streak: <span id="streak">0</span> dias</p>
+    <button onclick="concluir()">✔ Concluir tarefa</button>
 
-<h2>📜 Missão Diária</h2>
-<p id="missao">Concluir suas tarefas do dia</p>
+    <p>Rank: <span id="rank">E</span></p>
 
-<button onclick="missaoDiaria()">🔥 Concluir missão diária</button>
+    <p>🔥 Streak: <span id="streak">0</span> dias</p>
 
-<p id="statusMissao"></p>
-<hr>
+    <h2>📜 Missão Diária</h2>
+    <p id="missao">Concluir suas tarefas do dia</p>
 
-<h2>📝 Tarefas</h2>
+    <button onclick="missaoDiaria()">🔥 Concluir missão diária</button>
 
-<input type="text" id="novaTarefa" placeholder="Digite a tarefa">
-<button onclick="adicionarTarefa()">➕ Adicionar</button>
+    <p id="statusMissao"></p>
 
-<ul id="listaTarefas"></ul>
+    <hr>
 
-<script src="script.js"></script>
+    <h2>📝 Tarefas</h2>
 
+    <input type="text" id="novaTarefa" placeholder="Digite a tarefa">
+    <button onclick="adicionarTarefa()">➕ Adicionar</button>
+
+    <ul id="listaTarefas"></ul>
+
+</div>
+
+  </div>
+<!-- SUB TELA -->
+<div id="painel" class="painel" onclick="fecharPainel()">
+
+  <div class="painel-conteudo" onclick="event.stopPropagation()">
+    <button class="fechar" onclick="fecharPainel()">✖</button>
+
+    <h2>👤 Perfil do Caçador</h2>
+
+    <p><strong>Nome:</strong> <span id="perfilNome">---</span></p>
+    <p><strong>Rank:</strong> <span id="perfilRank">E</span></p>
+    <p><strong>Nível:</strong> <span id="perfilNivel">1</span></p>
+    <p><strong>Pontos disponíveis:</strong> <span id="perfilPontos">0</span></p>
+
+    <hr>
+
+    <h3>📊 Status</h3>
+    <p>Força: <span id="perfilForca">1</span></p>
+    <p>Velocidade: <span id="perfilVelocidade">1</span></p>
+    <p>Resistência: <span id="perfilResistencia">1</span></p>
+    <p>Inteligência: <span id="perfilInteligencia">1</span></p>
+    <p>Sabedoria: <span id="perfilSabedoria">1</span></p>
+    <p>Qi: <span id="perfilQi">1</span></p>
+  </div>
+
+  <script src="script.js"></script>
 </body>
-</html>
