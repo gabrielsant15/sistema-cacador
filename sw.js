@@ -1,110 +1,49 @@
-// ════════════════════════════════════════
-//  SOLO LEVELING OS — Service Worker
-//  Cache offline + atualizações automáticas
-// ════════════════════════════════════════
+const CACHE_NAME = 'solo-leveling-os-v3';
 
-const CACHE_NAME = 'sl-os-v1';
+// As URLs de fontes abaixo agora estão idênticas às chamadas no HTML para garantir o cache offline
 const CACHE_ASSETS = [
-  './',
-  './index.html',
-  './manifest.json',
-  './icon-72.png',
-  './icon-96.png',
-  './icon-128.png',
-  './icon-144.png',
-  './icon-152.png',
-  './icon-180.png',
-  './icon-192.png',
-  './icon-512.png',
-  'https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@500;700&family=Share+Tech+Mono&display=swap'
+  'index.html',
+  'manifest.json',
+  'icon-120.png',
+  'icon-152.png',
+  'icon-180.png',
+  'icon-512.png',
+  'https://cdn.tailwindcss.com',
+  'https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;600;700&family=Share+Tech+Mono&display=swap',
+  'https://fonts.gstatic.com/crossorigin'
 ];
 
-// ─── INSTALL: faz cache dos assets principais ───
-self.addEventListener('install', event => {
-  console.log('[SW] Instalando...');
-  event.waitUntil(
-    caches.open(CACHE_NAME).then(cache => {
-      console.log('[SW] Cacheando assets...');
-      return cache.addAll(CACHE_ASSETS).catch(err => {
-        console.warn('[SW] Alguns assets falharam no cache:', err);
-      });
-    }).then(() => self.skipWaiting())
+// Instalação do Service Worker e Caching dos arquivos estáticos
+self.addEventListener('install', (e) => {
+  e.waitUntil(
+    caches.open(CACHE_NAME).then((cache) => {
+      return cache.addAll(CACHE_ASSETS);
+    })
   );
+  self.skipWaiting();
 });
 
-// ─── ACTIVATE: limpa caches antigos ───
-self.addEventListener('activate', event => {
-  console.log('[SW] Ativando...');
-  event.waitUntil(
-    caches.keys().then(keys =>
-      Promise.all(
-        keys.filter(key => key !== CACHE_NAME).map(key => {
-          console.log('[SW] Deletando cache antigo:', key);
-          return caches.delete(key);
+// Ativação e limpeza de caches antigos
+self.addEventListener('activate', (e) => {
+  e.waitUntil(
+    caches.keys().then((keys) => {
+      return Promise.all(
+        keys.map((key) => {
+          if (key !== CACHE_NAME) {
+            return caches.delete(key);
+          }
         })
-      )
-    ).then(() => self.clients.claim())
+      );
+    })
+  );
+  self.clients.claim();
+});
+
+// Estratégia de Cache: Network First, caindo para o Cache se estiver Offline
+self.addEventListener('fetch', (e) => {
+  e.respondWith(
+    fetch(e.request).catch(() => {
+      return caches.match(e.request);
+    })
   );
 });
-
-// ─── FETCH: Cache-first para assets, network-first para resto ───
-self.addEventListener('fetch', event => {
-  const { request } = event;
-  const url = new URL(request.url);
-
-  // Fontes Google: cache-first
-  if (url.hostname === 'fonts.googleapis.com' || url.hostname === 'fonts.gstatic.com') {
-    event.respondWith(
-      caches.match(request).then(cached => {
-        if (cached) return cached;
-        return fetch(request).then(response => {
-          const clone = response.clone();
-          caches.open(CACHE_NAME).then(cache => cache.put(request, clone));
-          return response;
-        }).catch(() => cached);
-      })
-    );
-    return;
-  }
-
-  // App shell (index.html, manifest, icons): cache-first
-  if (
-    request.destination === 'document' ||
-    request.destination === 'image' ||
-    url.pathname.endsWith('.html') ||
-    url.pathname.endsWith('.json') ||
-    url.pathname.endsWith('.png')
-  ) {
-    event.respondWith(
-      caches.match(request).then(cached => {
-        if (cached) {
-          // Tenta atualizar em background
-          fetch(request).then(response => {
-            caches.open(CACHE_NAME).then(cache => cache.put(request, response));
-          }).catch(() => {});
-          return cached;
-        }
-        return fetch(request).then(response => {
-          const clone = response.clone();
-          caches.open(CACHE_NAME).then(cache => cache.put(request, clone));
-          return response;
-        });
-      })
-    );
-    return;
-  }
-
-  // Default: network com fallback para cache
-  event.respondWith(
-    fetch(request).catch(() => caches.match(request))
-  );
-});
-
-// ─── MENSAGENS: skip waiting manual ───
-self.addEventListener('message', event => {
-  if (event.data && event.data.type === 'SKIP_WAITING') {
-    self.skipWaiting();
-  }
-});
-
-console.log('[SW] Solo Leveling OS Service Worker carregado.');
