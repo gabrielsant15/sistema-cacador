@@ -8,14 +8,14 @@ const CACHE_ASSETS = [
   './',
   './index.html',
   './manifest.json',
-  './icons/icon-72.png',
-  './icons/icon-96.png',
-  './icons/icon-128.png',
-  './icons/icon-144.png',
-  './icons/icon-152.png',
-  './icons/icon-180.png',
-  './icons/icon-192.png',
-  './icons/icon-512.png',
+  './icon-72.png',
+  './icon-96.png',
+  './icon-128.png',
+  './icon-144.png',
+  './icon-152.png',
+  './icon-180.png',
+  './icon-192.png',
+  './icon-512.png',
   'https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@500;700&family=Share+Tech+Mono&display=swap'
 ];
 
