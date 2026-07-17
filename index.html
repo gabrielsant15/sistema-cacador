@@ -1465,6 +1465,59 @@
 
 <script>
 // ════════════════════════════════════════
+//  AUDIO ENGINE (Web Audio API - No external files needed)
+// ════════════════════════════════════════
+const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+function playSound(type) {
+  if (audioCtx.state === 'suspended') {
+    audioCtx.resume();
+  }
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  osc.connect(gain);
+  gain.connect(audioCtx.destination);
+
+  const now = audioCtx.currentTime;
+
+  if (type === 'click') {
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(600, now);
+    osc.frequency.exponentialRampToValueAtTime(1200, now + 0.08);
+    gain.gain.setValueAtTime(0.1, now);
+    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.08);
+    osc.start(now);
+    osc.stop(now + 0.08);
+  } else if (type === 'complete') {
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(523.25, now); // C5
+    osc.frequency.setValueAtTime(659.25, now + 0.1); // E5
+    osc.frequency.setValueAtTime(783.99, now + 0.2); // G5
+    osc.frequency.exponentialRampToValueAtTime(1046.50, now + 0.3); // C6
+    gain.gain.setValueAtTime(0.15, now);
+    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
+    osc.start(now);
+    osc.stop(now + 0.4);
+  } else if (type === 'levelup') {
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(261.63, now); // C4
+    osc.frequency.exponentialRampToValueAtTime(880.00, now + 0.5); // A5
+    gain.gain.setValueAtTime(0.2, now);
+    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.8);
+    osc.start(now);
+    osc.stop(now + 0.8);
+  } else if (type === 'alert') {
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(150, now);
+    osc.frequency.linearRampToValueAtTime(100, now + 0.2);
+    gain.gain.setValueAtTime(0.2, now);
+    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.25);
+    osc.start(now);
+    osc.stop(now + 0.25);
+  }
+}
+
+// ════════════════════════════════════════
 //  STATE
 // ════════════════════════════════════════
 let player = {
@@ -1508,16 +1561,18 @@ const SHOP_ITEMS = [
 // ════════════════════════════════════════
 document.querySelectorAll('.class-btn').forEach(btn => {
   btn.addEventListener('click', function() {
+    playSound('click');
     document.querySelectorAll('.class-btn').forEach(b => b.classList.remove('selected'));
     this.classList.add('selected');
   });
 });
 
 function initSystem() {
+  playSound('click');
   const name = document.getElementById('setup-name').value.trim();
   const cls = document.querySelector('.class-btn.selected')?.dataset.class;
-  if (!name) { showNotif('⚠️ Digite seu nome, Hunter.', 'warning'); return; }
-  if (!cls) { showNotif('⚠️ Selecione sua classe.', 'warning'); return; }
+  if (!name) { showNotif('⚠️ Digite seu nome, Hunter.', 'warning'); playSound('alert'); return; }
+  if (!cls) { showNotif('⚠️ Selecione sua classe.', 'warning'); playSound('alert'); return; }
 
   player.name = name.toUpperCase();
   player.class = cls;
@@ -1532,16 +1587,17 @@ function initSystem() {
   document.getElementById('app').style.display = 'block';
   document.getElementById('fab-btn').style.display = 'flex';
 
+  player.log = []; // Clear log placeholder
   addLog(`Sistema inicializado para o Hunter ${player.name}`, 'sys');
   addLog(`Classe selecionada: ${player.class}`, 'info');
   addLog(`Atributos base aplicados com sucesso.`, 'ok');
 
+  addSampleQuests();
   updateAllUI();
   renderCalendar();
   renderInventory();
   checkDailyReset();
 
-  // Boot notifications
   setTimeout(() => showNotif(`Bem-vindo, ${player.name}. O Sistema está online.`, 'info'), 800);
   setTimeout(() => showNotif('Daily Quests disponíveis. Comece sua jornada.', 'default'), 2400);
 }
@@ -1550,6 +1606,7 @@ function initSystem() {
 //  UI UPDATES
 // ════════════════════════════════════════
 function updateAllUI() {
+  if (!player.name) return;
   const initial = player.name.charAt(0);
   document.getElementById('tb-avatar').textContent = initial;
   document.getElementById('big-avatar').textContent = initial;
@@ -1691,6 +1748,7 @@ function drawRadar() {
 //  QUESTS
 // ════════════════════════════════════════
 function openModal() {
+  playSound('click');
   document.getElementById('quest-modal').classList.add('open');
   document.getElementById('q-title').focus();
 }
@@ -1704,8 +1762,9 @@ function closeModal() {
 }
 
 function addQuest() {
+  playSound('click');
   const title = document.getElementById('q-title').value.trim();
-  if (!title) { showNotif('⚠️ Digite o título da quest.', 'warning'); return; }
+  if (!title) { showNotif('⚠️ Digite o título da quest.', 'warning'); playSound('alert'); return; }
   const quest = {
     id: Date.now(),
     title,
@@ -1722,15 +1781,18 @@ function addQuest() {
   player.quests.push(quest);
   addLog(`Nova quest criada: [${quest.type.toUpperCase()}] ${quest.title}`, 'sys');
   closeModal();
+  saveState();
   updateAllUI();
   showNotif(`Quest registrada: ${quest.title}`, 'default');
 }
 
 function deleteQuest(id) {
+  playSound('click');
   const q = player.quests.find(x => x.id === id);
   if (!q) return;
   player.quests = player.quests.filter(x => x.id !== id);
   addLog(`Quest removida: ${q.title}`, 'warn');
+  saveState();
   updateAllUI();
 }
 
@@ -1740,6 +1802,7 @@ function completeQuest(id) {
   q.done = true;
   player.xp += q.xp;
   player.gold += q.gold;
+  playSound('complete');
 
   // Stat bonus
   const statMap = { STR: 'STR', AGI: 'AGI', VIT: 'VIT', INT: 'INT', SEN: 'SEN' };
@@ -1758,11 +1821,13 @@ function completeQuest(id) {
   player.calendarData[today].done = (player.calendarData[today].done || 0) + 1;
 
   checkLevelUp();
+  saveState();
   updateAllUI();
   renderCalendar();
 }
 
 function checkLevelUp() {
+  let leveledUp = false;
   while (player.xp >= player.xpNeeded) {
     player.xp -= player.xpNeeded;
     player.level++;
@@ -1779,10 +1844,14 @@ function checkLevelUp() {
     document.getElementById('lu-rank').textContent = `RANK ${player.rank} — LEVEL ${player.level}`;
     document.getElementById('lu-title').textContent = player.title.toUpperCase();
     document.getElementById('levelup-overlay').classList.add('show');
+    leveledUp = true;
 
     if (oldRank !== player.rank) {
-      showNotif(`🏆 RANK UP! ${oldRank} → ${player.rank} | ${player.title}`, 'success');
+      setTimeout(() => showNotif(`🏆 RANK UP! ${oldRank} → ${player.rank} | ${player.title}`, 'success'), 1000);
     }
+  }
+  if (leveledUp) {
+    playSound('levelup');
   }
 }
 
@@ -1813,6 +1882,7 @@ function renderDailyList() {
 
 let questFilter = 'all';
 function filterQuests(type) {
+  playSound('click');
   questFilter = type;
   renderQuestsGrid();
 }
@@ -1859,24 +1929,35 @@ function renderQuestsGrid() {
 // ════════════════════════════════════════
 function checkDailyReset() {
   const today = new Date().toISOString().split('T')[0];
-  if (player.lastDaily !== today) {
-    // Reset dailies
-    const hadIncomplete = player.lastDaily && player.quests.filter(q => q.type === 'daily' && !q.done).length > 0;
-    player.quests.filter(q => q.type === 'daily').forEach(q => { q.done = false; });
+  if (player.lastDaily && player.lastDaily !== today) {
+    // Calculando dias perdidos se o usuário sumiu por muito tempo
+    const lastDate = new Date(player.lastDaily);
+    const currentDate = new Date(today);
+    const diffTime = Math.abs(currentDate - lastDate);
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+    // Pegamos a quantidade de quests incompletas de ontem
+    const hadIncomplete = player.quests.filter(q => q.type === 'daily' && !q.done).length > 0;
 
     if (hadIncomplete) {
+      playSound('alert');
       if (!player.calendarData[player.lastDaily]) player.calendarData[player.lastDaily] = { done: 0, total: 0 };
       player.calendarData[player.lastDaily].penalty = true;
       player.hp = Math.max(10, player.hp - 20);
       addLog(`PENALIDADE: Daily quests não completadas ontem. -20 HP`, 'err');
-      showNotif('⚠️ PENALTY: Daily quests não completadas. -20 HP', 'danger');
+      showNotif('⚠️ PENALTY: Daily quests não completadas ontem. -20 HP', 'danger');
     }
 
-    // Mark today's total
+    // Reset para o novo dia
+    player.quests.filter(q => q.type === 'daily').forEach(q => { q.done = false; });
     const dailyCount = player.quests.filter(q => q.type === 'daily').length;
-    if (!player.calendarData[today]) player.calendarData[today] = { done: 0, total: dailyCount };
+    player.calendarData[today] = { done: 0, total: dailyCount };
     player.lastDaily = today;
-    addLog(`Novo dia iniciado. Daily quests resetadas.`, 'sys');
+    addLog(`Novo dia detectado. Daily quests restauradas para progresso inicial.`, 'sys');
+    saveState();
+  } else if (!player.lastDaily) {
+    player.lastDaily = today;
+    saveState();
   }
 }
 
@@ -1934,6 +2015,7 @@ function renderCalendar() {
 }
 
 function changeMonth(dir) {
+  playSound('click');
   calMonth += dir;
   if (calMonth > 11) { calMonth = 0; calYear++; }
   if (calMonth < 0) { calMonth = 11; calYear--; }
@@ -1984,13 +2066,16 @@ function buyItem(id) {
   if (!item || player.gold < item.cost) return;
   player.gold -= item.cost;
   player.inventory.push({ ...item, equipped: false });
+  playSound('complete');
   addLog(`Item comprado: ${item.name} por ${item.cost} Gold`, 'ok');
   showNotif(`🛒 ${item.name} adquirido!`, 'success');
+  saveState();
   updateAllUI();
   renderInventory();
 }
 
 function toggleEquip(id) {
+  playSound('click');
   const item = player.inventory.find(i => i.id === id);
   if (!item) return;
   item.equipped = !item.equipped;
@@ -1998,6 +2083,7 @@ function toggleEquip(id) {
   if (item.equipped && item.id === 'headphones') { player.stats.INT += 3; addLog('Headphones equipado: +3 INT', 'ok'); }
   if (!item.equipped && item.id === 'headphones') { player.stats.INT -= 3; addLog('Headphones desequipado: -3 INT', 'warn'); }
 
+  saveState();
   updateAllUI();
   renderInventory();
 }
@@ -2031,7 +2117,7 @@ function showNotif(msg, type = 'default') {
 function addLog(msg, type = 'info') {
   const now = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
   player.log.unshift({ time: now, msg, type });
-  if (player.log.length > 100) player.log.pop();
+  if (player.log.length > 50) player.log.pop();
   renderLog();
 }
 
@@ -2047,6 +2133,7 @@ function renderLog() {
 //  VIEWS
 // ════════════════════════════════════════
 function showView(id) {
+  playSound('click');
   document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
   document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
   document.getElementById(`view-${id}`).classList.add('active');
@@ -2061,6 +2148,7 @@ function showView(id) {
 //  DEFAULT SAMPLE QUESTS
 // ════════════════════════════════════════
 function addSampleQuests() {
+  if (player.quests.length > 0) return; // Se o usuário já tiver criado ou carregado quests dele, não duplica
   const samples = [
     { title: 'Beber 2L de água', type: 'daily', attr: 'VIT', xp: 15, gold: 5, desc: 'Hidratação diária essencial' },
     { title: 'Dormir 7h+', type: 'daily', attr: 'VIT', xp: 20, gold: 8, desc: 'Recuperação completa do corpo' },
@@ -2072,15 +2160,8 @@ function addSampleQuests() {
   samples.forEach(s => {
     player.quests.push({ id: Date.now() + Math.random(), ...s, done: false, progress: 0, createdAt: new Date().toISOString(), deadline: '' });
   });
+  saveState();
 }
-
-// Init with sample quests after setup
-const origInit = window.initSystem;
-window.initSystem = function() {
-  origInit();
-  addSampleQuests();
-  updateAllUI();
-};
 
 // ═══ KEYBOARD SHORTCUT ═══
 document.addEventListener('keydown', e => {
@@ -2132,13 +2213,16 @@ function saveState() {
 function loadState() {
   try {
     const saved = localStorage.getItem('sl_os_player');
-    if (saved) { Object.assign(player, JSON.parse(saved)); return true; }
+    if (saved) {
+      player = Object.assign({}, player, JSON.parse(saved));
+      return true;
+    }
   } catch(e) {}
   return false;
 }
 
-// Auto-save a cada 30s e ao fechar/minimizar
-setInterval(saveState, 30000);
+// Auto-save a cada 10s e ao fechar/minimizar
+setInterval(saveState, 10000);
 window.addEventListener('beforeunload', saveState);
 window.addEventListener('visibilitychange', () => { if (document.hidden) saveState(); });
 
@@ -2148,11 +2232,15 @@ window.addEventListener('DOMContentLoaded', () => {
     document.getElementById('setup-screen').style.display = 'none';
     document.getElementById('app').style.display = 'block';
     document.getElementById('fab-btn').style.display = 'flex';
+    checkDailyReset();
     updateAllUI();
     renderCalendar();
     renderInventory();
-    checkDailyReset();
-    setTimeout(() => showNotif(`⚡ Bem-vindo de volta, ${player.name}.`, 'default'), 600);
+    renderLog();
+    setTimeout(() => {
+      playSound('complete');
+      showNotif(`⚡ Bem-vindo de volta, ${player.name}.`, 'default');
+    }, 600);
   }
 });
 </script>
